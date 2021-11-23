@@ -1,5 +1,7 @@
 data/
 launch.json
+settings.json
+.metals/
 temp.ipynb
 # Byte-compiled / optimized / DLL files
 __pycache__/
