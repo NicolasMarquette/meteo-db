@@ -1,6 +1,3 @@
-# meteo-db
-1
-2
-3
-4
-5
+# WEATHER DATABASE
+
+This is a project to set a postgresql database and an API with weather data from `Meteo France`
