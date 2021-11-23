@@ -1,0 +1,37 @@
+version: '3.9'
+networks:
+  meteo-db-network:
+services:
+  postgis:
+    image: postgis/postgis
+    container_name: postgis
+    environment:
+      - POSTGRES_PASSWORD=331295
+    networks:
+      - meteo-db-network
+    ports:
+      - 5432:5432
+    volumes:
+      - ./write_db/data:/weather_data
+  
+  write_db:
+    depends_on:
+      - postgis
+    build:
+      context: ./write_db
+      dockerfile: Dockerfile
+    image: mcaciolo/write_db
+    container_name: write_db
+    environment:
+      - WEATHER_DATA_FILES=NW_Ground_Stations_2016.csv
+      - MOUNTED_DATA_PATH=/weather_data
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=331295
+      - DB_HOST=postgis
+      - DB_PORT=5432
+    volumes:
+      - ./write_db/data:/weather_data
+    networks:
+      - meteo-db-network
+
