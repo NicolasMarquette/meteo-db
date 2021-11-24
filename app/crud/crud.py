@@ -70,3 +70,28 @@ def get_meteo(db_session: Session, station_id: int):
     query = text(f"select * from meteo WHERE station_id = {station_id} LIMIT 20")
     results = db_session.execute(query).fetchall()
     return  [dict(row) for row in results]
+
+
+def get_meteo_from_xyz(db_session: Session, station_id: int, x: int, y: int, z: int):
+    """Function to get the weather data for the station nearest the point specified.
+
+    Parameters
+    ----------
+    db_session : Session
+        The current session for the database.
+    station_id : int
+        The id of the station which want the location.
+    x : int
+        The latitude coordinate.
+    y : int
+        The longitude coordinate.
+    z : int
+        The height coordinate.
+
+    Return
+    ------
+    dict : A dictionnary with all the weather data for the station.
+    """
+    query = text(f"select * from meteo WHERE station_id = {station_id} LIMIT 20")
+    results = db_session.execute(query).fetchall()
+    return  [dict(row) for row in results]

@@ -87,7 +87,7 @@ def get_user(db_session, username: str):
     """
     if username in db_session:
         user_dict = db_session[username]
-        return schemas.UserInDB_session(**user_dict)
+        return schemas.UserInDB(**user_dict)
 
 
 def authenticate_user(db_session, username: str, password: str):
