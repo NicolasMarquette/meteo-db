@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meteodb-app
+spec:
+  replica: 1
+  selector:
+    matchLabels:
+      app: meteodb-app
+  template:
+    metadata:
+      labels:
+        app: meteodb-app
+    spec:
+      hostname: meteodb.com
+      volumes:
+      - name: weather-data
+        azureFile: 
+          secretName: azure-secret
+          shareName: azure-meteo
+          readOnly: false
+      containers:
+      - name: postgis
+        image: postgis/postgis
+        volumeMounts:
+          - name: weather-data
+            mountPath: /weather_data
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: meteodb-postgis-secret
+              key: postgis-password
+      - name: write_db
+        image: mcaciolo/write_db
+        volumeMounts:
+          - name: weather-data
+            mountPath: /weather_data
+        env:
+        - name: WEATHER_DATA_FILES
+          value: NW_Ground_Stations_2016.csv
+        - name: WEATHER_DATA_FILES
+          value: /weather_data
+        - name: DB_NAME
+          value: postgres
+        - name: DB_HOST
+          value: localhost
+        - name: DB_PORT
+          value: 5432      
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: meteodb-postgis-secret
+              key: postgis-password
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: meteodb-postgis-secret
+              key: postgis-user
