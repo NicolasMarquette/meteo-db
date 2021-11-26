@@ -14,19 +14,6 @@ from crud import crud
 router = APIRouter()
 
 
-@router.get("/station", response_model=List[schemas.StationsBase])
-async def get_station(
-    station_id: int,
-    db_session: Session = Depends(get_db),
-    current_user: schemas.User = Depends(deps.get_current_user)
-):
-    """Get the location of the specified station."""
-    db_session_station = crud.get_station(db_session, station_id=station_id)
-    if not db_session_station:
-        raise HTTPException(status_code=404, detail="Station not found")
-    return db_session_station
-
-
 @router.get("/stations", response_model=List[schemas.StationsBase])
 async def get_stations(
     station_id: List[int] = Query(None),

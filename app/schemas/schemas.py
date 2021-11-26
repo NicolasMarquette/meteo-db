@@ -29,6 +29,23 @@ class MeteoBase(BaseModel):
     pressure: Optional[float] = None
 
 
+class MeteoXYZ(BaseModel):
+    "Base model for the weather data."
+    id: int
+    position: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    avg_wind_direction: Optional[float] = None
+    avg_wind_speed: Optional[float] = None
+    avg_precip: Optional[float] = None
+    avg_humidity: Optional[float] = None
+    avg_dew_point: Optional[float] = None
+    avg_temperature: Optional[float] = None
+    avg_pressure: Optional[float] = None
+    count_data: int
+
+
+
 class Token(BaseModel):
     """Base model for the token."""
     access_token: str
