@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        meteo-api
+        app: meteo-api
     spec:
       containers:
       - name: meteo-api
@@ -22,9 +22,9 @@ spec:
         - name: DB_NAME
           value: postgres
         - name: DB_HOST
-          value: 20.101.63.152
+          value: '20.101.63.152'
         - name: DB_PORT
-          value: 5432
+          value: '5432'
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: meteodb-app
 spec:
-  replica: 1
+  replicas: 1
   selector:
     matchLabels:
       app: meteodb-app
@@ -12,7 +12,7 @@ spec:
       labels:
         app: meteodb-app
     spec:
-      hostname: meteodb.com
+      hostname: meteodb
       volumes:
       - name: weather-data
         azureFile: 
@@ -33,22 +33,20 @@ spec:
             secretKeyRef:
               name: meteodb-postgis-secret
               key: postgis-password
-      - name: write_db
+      - name: write-db
         image: mcaciolo/write_db
         volumeMounts:
           - name: weather-data
             mountPath: /weather_data
         env:
-        - name: WEATHER_DATA_FILES
-          value: NW_Ground_Stations_2016.csv
-        - name: WEATHER_DATA_FILES
+        - name: MOUNTED_DATA_PATH
           value: /weather_data
         - name: DB_NAME
           value: postgres
         - name: DB_HOST
           value: localhost
         - name: DB_PORT
-          value: 5432      
+          value: '5432'      
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
