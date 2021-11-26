@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meteo-api
+spec:
+  replica: 1
+  selector:
+    matchLabels:
+      app: meteo-api
+  template:
+    metadata:
+      labels:
+        meteo-api
+    spec:
+      containers:
+      - name: meteo-api
+        image: nikodataengineer/meteo-api:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DB_NAME
+          value: postgres
+        - name: DB_HOST
+          value: 20.101.63.152
+        - name: DB_PORT
+          value: 5432
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: meteodb-postgis-secret
+              key: postgis-password
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: meteodb-postgis-secret
+              key: postgis-user
