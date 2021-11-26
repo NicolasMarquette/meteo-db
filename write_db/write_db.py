@@ -3,9 +3,11 @@ from datetime import datetime
 from pathlib import Path
 from os import environ
 from time import sleep
+import glob
 
-data_files = environ['WEATHER_DATA_FILES'].split(',')
+
 mounted_path = Path(environ['MOUNTED_DATA_PATH'])
+data_files = glob.glob(str(mounted_path/'*.csv'))
 
 dbname = environ['DB_NAME']
 user = environ['DB_USER']

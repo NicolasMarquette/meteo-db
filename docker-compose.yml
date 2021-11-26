@@ -23,7 +23,6 @@ services:
     image: mcaciolo/write_db
     container_name: write_db
     environment:
-      - WEATHER_DATA_FILES=NW_Ground_Stations_2016.csv
       - MOUNTED_DATA_PATH=/weather_data
       - DB_NAME=postgres
       - DB_USER=postgres
