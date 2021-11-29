@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: meteodb-app
+  name: meteodb
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: meteodb-app
+      app: meteodb
   template:
     metadata:
       labels:
-        app: meteodb-app
+        app: meteodb
     spec:
       hostname: meteodb
       volumes:
@@ -33,27 +33,40 @@ spec:
             secretKeyRef:
               name: meteodb-postgis-secret
               key: postgis-password
-      - name: write-db
-        image: mcaciolo/write_db
-        volumeMounts:
-          - name: weather-data
-            mountPath: /weather_data
-        env:
-        - name: MOUNTED_DATA_PATH
-          value: /weather_data
-        - name: DB_NAME
-          value: postgres
-        - name: DB_HOST
-          value: localhost
-        - name: DB_PORT
-          value: '5432'      
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: meteodb-postgis-secret
-              key: postgis-password
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: meteodb-postgis-secret
-              key: postgis-user
+      
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: write-db-job
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: write-db
+            image: mcaciolo/write_db
+            volumeMounts:
+              - name: weather-data
+                mountPath: /weather_data
+            env:
+            - name: MOUNTED_DATA_PATH
+              value: /weather_data
+            - name: DB_NAME
+              value: postgres
+            - name: DB_HOST
+              value: meteodb
+            - name: DB_PORT
+              value: '5432'      
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: meteodb-postgis-secret
+                  key: postgis-password
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: meteodb-postgis-secret
+                  key: postgis-user
