@@ -1,50 +1,19 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: meteodb
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: meteodb
-  template:
-    metadata:
-      labels:
-        app: meteodb
-    spec:
-      hostname: meteodb
-      volumes:
-      - name: weather-data
-        azureFile: 
-          secretName: azure-secret
-          shareName: azure-meteo
-          readOnly: false
-      containers:
-      - name: postgis
-        image: postgis/postgis
-        volumeMounts:
-          - name: weather-data
-            mountPath: /weather_data
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: meteodb-postgis-secret
-              key: postgis-password
-      
----
-apiVersion: batch/v1
+apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: write-db-job
 spec:
-  schedule: "*/1 * * * *"
+  schedule: "49 */1 * * *"
   jobTemplate:
     spec:
       template:
         spec:
+          volumes:
+          - name: weather-data
+            azureFile: 
+              secretName: azure-secret
+              shareName: azure-meteo
+              readOnly: false
           containers:
           - name: write-db
             image: mcaciolo/write_db
@@ -70,3 +39,4 @@ spec:
                 secretKeyRef:
                   name: meteodb-postgis-secret
                   key: postgis-user
+          restartPolicy: OnFailure
