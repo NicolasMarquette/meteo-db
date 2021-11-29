@@ -40,10 +40,7 @@ sql_command = """
     
     CREATE TABLE IF NOT EXISTS meteo (
         id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
-        station_id INTEGER NOT NULL,
-        lat REAL NOT NULL,
-        lon REAL NOT NULL,
-        heigth_sta REAL NOT NULL,
+        station_id INTEGER NOT NULL REFERENCES stations(id),
         tmp TIMESTAMP NOT NULL,
         wind_direction REAL,
         wind_speed REAL,
@@ -56,6 +53,9 @@ sql_command = """
 """
 with conn.cursor() as curs:
     curs.execute(sql_command)
+    
+#Processed file directory
+(mounted_path / 'processed').mkdir(exist_ok=True)
 
 #Transforming the csv files and copying it to meteo table
 for file_name in data_files:
@@ -66,16 +66,46 @@ for file_name in data_files:
     
     with open(original_file_name, 'r') as origin_file:
         with open(transformed_file_name, 'w') as volume_file:
-            content = [line for line in origin_file.readlines() if line!='\n']
-            volume_file.writelines(content[1:])
+            volume_file.write("".join([line for line in origin_file.readlines() if line!='\n'][1:]))
 
     print(f"{datetime.now()} : Inserting file {file_name} into meteo table")
     sql_command = f"""
-        COPY meteo (
+    
+        CREATE EXTENSION IF NOT EXISTS file_fdw;
+        
+        CREATE SERVER IF NOT EXISTS srv_file_fdw FOREIGN DATA WRAPPER file_fdw;
+        
+        CREATE FOREIGN TABLE meteo_temp(
+            station_id INTEGER NOT NULL,
+            lat REAL NOT NULL,
+            lon REAL NOT NULL,
+            heigth_sta REAL NOT NULL,
+            tmp TIMESTAMP NOT NULL,
+            wind_direction REAL,
+            wind_speed REAL,
+            precip REAL,
+            humidity REAL,
+            dew_point REAL,
+            temperature REAL,
+            pressure REAL
+        )
+            SERVER srv_file_fdw
+            OPTIONS (FILENAME '{transformed_file_name}', FORMAT 'csv');
+
+        INSERT INTO stations
+            SELECT st.station_id, st.name, st.position FROM 
+            (
+                SELECT
+                    station_id, 
+                    CAST(station_id as VARCHAR(255)) as name,
+                    ST_GeomFromText(CONCAT('POINT Z(', avg(lat), ' ', avg(lon), ' ', avg(heigth_sta), ')')) as position
+                FROM meteo_temp
+                GROUP BY station_id
+            ) st
+            WHERE station_id NOT IN (SELECT id FROM stations);
+            
+        INSERT INTO meteo (
             station_id,
-            lat,
-            lon,
-            heigth_sta,
             tmp,
             wind_direction,
             wind_speed,
@@ -85,39 +115,30 @@ for file_name in data_files:
             temperature,
             pressure
         )
-        FROM '{transformed_file_name}' 
-        DELIMITER ',' 
-        CSV;
+            SELECT
+                station_id,
+                tmp,
+                wind_direction,
+                wind_speed,
+                precip,
+                humidity,
+                dew_point,
+                temperature,
+                pressure
+            FROM meteo_temp;
+            
+        DROP FOREIGN TABLE meteo_temp;
+        
+        DROP SERVER srv_file_fdw;
+        
+        DROP EXTENSION file_fdw; 
     """
     with conn.cursor() as curs:
         curs.execute(sql_command)
     
+    #Move the procedded file and delete the transformed one
+    original_file_name.replace(original_file_name.parent / 'processed' / original_file_name.name)
     transformed_file_name.unlink()
-
-#Extracting station data to a separate table
-sql_command = """    
-    INSERT INTO stations
-    SELECT
-        station_id, 
-        CAST(station_id as VARCHAR(255)),
-        ST_GeomFromText(CONCAT('POINT Z(', avg(lat), ' ', avg(lon), ' ', avg(heigth_sta), ')'))
-    FROM meteo 
-    GROUP BY station_id;
-"""
-with conn.cursor() as curs:
-    curs.execute(sql_command)
-    
-#Dropping redundant columns and defining foreign key constraint
-sql_command = """
-    ALTER TABLE meteo
-        DROP COLUMN lat,
-        DROP COLUMN lon,
-        DROP COLUMN heigth_sta,
-        ADD FOREIGN KEY (station_id) REFERENCES stations(id);
-"""
-with conn.cursor() as curs:
-    curs.execute(sql_command)
-    
 
 print(f"{datetime.now()} : Database is ready !")
 

@@ -1,0 +1,42 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: write-db-job
+spec:
+  schedule: "49 */1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: weather-data
+            azureFile: 
+              secretName: azure-secret
+              shareName: azure-meteo
+              readOnly: false
+          containers:
+          - name: write-db
+            image: mcaciolo/write_db
+            volumeMounts:
+              - name: weather-data
+                mountPath: /weather_data
+            env:
+            - name: MOUNTED_DATA_PATH
+              value: /weather_data
+            - name: DB_NAME
+              value: postgres
+            - name: DB_HOST
+              value: meteodb
+            - name: DB_PORT
+              value: '5432'      
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: meteodb-postgis-secret
+                  key: postgis-password
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: meteodb-postgis-secret
+                  key: postgis-user
+          restartPolicy: OnFailure

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: meteo-api
 spec:
-  replica: 1
+  replicas: 1
   selector:
     matchLabels:
       app: meteo-api
@@ -22,7 +22,7 @@ spec:
         - name: DB_NAME
           value: postgres
         - name: DB_HOST
-          value: '20.101.63.152'
+          value: 'meteodb'
         - name: DB_PORT
           value: '5432'
         - name: DB_PASSWORD

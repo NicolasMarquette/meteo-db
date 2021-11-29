@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: meteodb
+spec:
+  selector:
+    matchLabels:
+      app: meteodb
+  serviceName: meteodb
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: meteodb
+    spec:
+      hostname: meteodb
+      volumes:
+      - name: weather-data
+        azureFile: 
+          secretName: azure-secret
+          shareName: azure-meteo
+          readOnly: false
+      containers:
+      - name: postgis
+        image: postgis/postgis
+        volumeMounts:
+          - name: weather-data
+            mountPath: /weather_data
+          - name: postgresql-db-disk
+            mountPath: /data
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: meteodb-postgis-secret
+              key: postgis-password
+        - name: PGDATA
+          value: /data/pgdata
+        
+  # Volume Claim
+  volumeClaimTemplates:
+    - metadata:
+        name: postgresql-db-disk
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+
+      
+    
