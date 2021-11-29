@@ -2,16 +2,16 @@
 
 from typing import List
 
+from databases import Database
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 
-def get_stations(db_session: Session, station_id: List[int]):
+async def get_stations(database: Database, station_id: List[int]):
     """Function to get the location of the specified stations.
 
     Parameters
     ----------
-    db_session : Session
+    database : Session
         The current session for the database.
     station_id : list[int]
         A list of id of the stations which want the location.
@@ -33,16 +33,16 @@ def get_stations(db_session: Session, station_id: List[int]):
                     "ST_Y(position::geometry) AS long, "
                     "ST_Z(position::geometry) AS height "
                     f"FROM stations WHERE id IN {stations_id};")
-        results = db_session.execute(query).fetchall()
+        results = await database.fetch_all(query)
         return  [dict(row) for row in results]
 
 
-def get_meteo_from_id(db_session: Session, station_id: int, limit: int):
+async def get_meteo_from_id(database: Database, station_id: int, limit: int):
     """Function to get the weather data for the station specified.
 
     Parameters
     ----------
-    db_session : Session
+    database : Session
         The current session for the database.
     station_id : int
         The id of the station which want the location.
@@ -58,19 +58,19 @@ def get_meteo_from_id(db_session: Session, station_id: int, limit: int):
                  f"WHERE station_id = {station_id} "
                  "ORDER BY tmp DESC "
                  f"LIMIT {limit};")
-    results = db_session.execute(query).fetchall()
+    results = await database.fetch_all(query)
     return  [dict(row) for row in results]
 
 
 
-def get_meteo_avg_from_id(db_session: Session, station_id: int,
+async def get_meteo_avg_from_id(database: Database, station_id: int,
                        start_date: str, end_date: str
 ):
     """Function to get the weather data for the specified station id.
 
     Parameters
     ----------
-    db_session : Session
+    database : Session
         The current session for the database.
     station_id : int
         The id of the station which want the location.
@@ -112,18 +112,18 @@ def get_meteo_avg_from_id(db_session: Session, station_id: int,
     "GROUP BY meteo.station_id, position;"
     )
 
-    results = db_session.execute(query).fetchall()
+    results = await database.fetch_all(query)
     return  [dict(row) for row in results]
 
 
-def get_meteo_avg_from_xyz(db_session: Session, x: float, y: float, z: float,
+async def get_meteo_avg_from_xyz(database: Database, x: float, y: float, z: float,
                        start_date: str, end_date: str
 ):
     """Function to get the weather data for the station nearest the point specified.
 
     Parameters
     ----------
-    db_session : Session
+    database : Session
         The current session for the database.
     x : int
         The latitude coordinate.
@@ -174,5 +174,5 @@ def get_meteo_avg_from_xyz(db_session: Session, x: float, y: float, z: float,
     "GROUP BY station.id, station.position;"
     )
 
-    results = db_session.execute(query).fetchall()
+    results = await database.fetch_all(query)
     return  [dict(row) for row in results]
